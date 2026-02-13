@@ -1,67 +1,163 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Memorable Password Generator</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 600px;
-            margin: 20px auto;
-            padding: 20px;
+        :root {
+            --bg-dark: #020403;
+            --bg-layer: #03110a;
+            --card: rgba(1, 20, 10, 0.78);
+            --text-main: #d3ffe4;
+            --text-subtle: #84d7a8;
+            --accent-start: #00ff88;
+            --accent-end: #00c26a;
+            --line-glow: rgba(0, 255, 136, 0.2);
         }
-        .password-display {
-            font-size: 28px;
-            padding: 5px;
-            margin: 5px 5px;
-            background-color: #f0f0f0;
-            border-radius: 5px;
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            font-family: "JetBrains Mono", "Consolas", "Segoe UI", monospace;
+            color: var(--text-main);
+            background:
+                linear-gradient(90deg, transparent 97%, rgba(0, 255, 136, 0.05) 100%),
+                linear-gradient(0deg, transparent 97%, rgba(0, 255, 136, 0.05) 100%),
+                radial-gradient(circle at top, #062d1a, var(--bg-layer) 38%, var(--bg-dark));
+            background-size: 28px 28px, 28px 28px, cover;
+        }
+
+        .app {
+            width: min(760px, 100%);
+            background: var(--card);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(0, 255, 136, 0.35);
+            border-radius: 18px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), 0 0 35px rgba(0, 255, 136, 0.15);
+            padding: 32px;
             text-align: center;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: clamp(1.6rem, 3vw, 2rem);
+            letter-spacing: 0.02em;
+        }
+
+        .subtitle {
+            margin: 10px 0 26px;
+            color: var(--text-subtle);
+            font-size: 0.98rem;
+        }
+
+        .password-display {
+            margin: 10px 0;
+            padding: 18px 20px;
+            font-size: clamp(1.25rem, 4vw, 1.8rem);
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            word-break: break-word;
+            border-radius: 12px;
+            border: 1px solid rgba(0, 255, 136, 0.35);
+            background: linear-gradient(145deg, rgba(3, 34, 19, 0.92), rgba(1, 16, 9, 0.95));
+            text-shadow: 0 0 6px rgba(0, 255, 136, 0.45);
+            box-shadow: inset 0 0 0 1px var(--line-glow);
             user-select: all;
             cursor: pointer;
         }
-        button {
-            background-color: #4CAF50;
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
-        }
-        button:hover {
-            background-color: #45a049;
-        }
-        .button {
-            color: #666;
-            font-size: 16px;
-            text-align: center;
-            margin-top: 30px;
-        }
-        .checkbox-container {
+
+        .button-row {
             margin-top: 20px;
-            text-align: center;
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
         }
+
+        button {
+            border: 1px solid rgba(0, 255, 136, 0.35);
+            border-radius: 10px;
+            cursor: pointer;
+            color: #001d0f;
+            font-size: 0.98rem;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+            padding: 11px 20px;
+            background: linear-gradient(135deg, var(--accent-start), var(--accent-end));
+            box-shadow: 0 10px 22px rgba(0, 255, 136, 0.18);
+            transition: transform 0.16s ease, box-shadow 0.2s ease, filter 0.2s ease;
+        }
+
+        button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 14px 30px rgba(0, 255, 136, 0.28);
+            filter: brightness(1.04);
+        }
+
+        .copy-status {
+            min-height: 20px;
+            margin-top: 10px;
+            font-size: 0.9rem;
+            color: var(--text-subtle);
+        }
+
+        .footer-note {
+            margin-top: 24px;
+            color: var(--text-subtle);
+            font-size: 0.82rem;
+            opacity: 0.9;
+        }
+
+        .checkbox-container {
+            margin-top: 22px;
+            display: flex;
+            justify-content: center;
+        }
+
         .checkbox-container label {
-            font-size: 16px;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--text-subtle);
+            font-size: 0.97rem;
         }
+
         .checkbox-container input[type="checkbox"] {
-            width: 20px;
-            height: 20px;
-            vertical-align: middle;
+            width: 18px;
+            height: 18px;
+            accent-color: #22c55e;
         }
     </style>
 </head>
 <body>
-    <div class="password-display" id="passwordDisplay" onclick="this.select()"></div>
+    <main class="app">
+        <h1>Memorable Password Generator</h1>
+                <div class="password-display" id="passwordDisplay" onclick="selectPasswordText()"></div>
 
-    <div class="button">
-        <button onclick="generatePassword()" id="generateButton">Generate a New Password</button>
-    </div>
+        <div class="button-row">
+            <button onclick="generatePassword()" id="generateButton">Generate New Password</button>
+            <button onclick="copyPassword()" id="copyButton">Copy Password</button>
+        </div>
+        <div class="copy-status" id="copyStatus" aria-live="polite"></div>
 
-    <div class="checkbox-container">
-        <label>
-            <input type="checkbox" id="longPasswordCheckbox" onchange="togglePasswordLengthAndGenerate()"> Generate longer password
-        </label>
-    </div>
+        <div class="checkbox-container">
+            <label>
+                <input type="checkbox" id="longPasswordCheckbox" onchange="togglePasswordLengthAndGenerate()"> Use longer password (3 words)
+            </label>
+        </div>
+        <div class="footer-note">
+            Word list source: Bitcoin BIP39 passphrase wordlist.
+        </div>
+    </main>
 
     <script>
         const words = [
@@ -2138,13 +2234,38 @@
 
             const display = document.getElementById('passwordDisplay');
             display.textContent = password;
+            setCopyStatus('');
 
-            // Select the text for user convenience
+            selectPasswordText();
+        }
+
+        function selectPasswordText() {
+            const display = document.getElementById('passwordDisplay');
             const range = document.createRange();
             range.selectNodeContents(display);
             const selection = window.getSelection();
             selection.removeAllRanges();
             selection.addRange(range);
+        }
+
+        function setCopyStatus(message) {
+            document.getElementById('copyStatus').textContent = message;
+        }
+
+        async function copyPassword() {
+            const password = document.getElementById('passwordDisplay').textContent;
+            if (!password) {
+                setCopyStatus('No password to copy yet.');
+                return;
+            }
+
+            try {
+                await navigator.clipboard.writeText(password);
+                setCopyStatus('Copied to clipboard ✔');
+            } catch (error) {
+                selectPasswordText();
+                setCopyStatus('Clipboard blocked. Password selected, press Ctrl+C / ⌘+C.');
+            }
         }
 
         function togglePasswordLengthAndGenerate() {
