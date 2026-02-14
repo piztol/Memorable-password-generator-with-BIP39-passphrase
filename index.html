@@ -48,7 +48,7 @@
         }
 
         h1 {
-            margin: 0;
+            margin: 1;
             font-size: clamp(1.6rem, 3vw, 2rem);
             letter-spacing: 0.02em;
         }
@@ -144,7 +144,7 @@
                 <div class="password-display" id="passwordDisplay" onclick="selectPasswordText()"></div>
 
         <div class="button-row">
-            <button onclick="generatePassword()" id="generateButton">Generate New Password</button>
+            <button onclick="generatePassword()" id="generateButton">New Password</button>
             <button onclick="copyPassword()" id="copyButton">Copy Password</button>
         </div>
         <div class="copy-status" id="copyStatus" aria-live="polite"></div>
@@ -156,7 +156,7 @@
         </div>
         <div class="footer-note">
             Word list source: Bitcoin BIP39 passphrase wordlist.
-    		<p>For more information, please visit our <a href="https://github.com/piztol/Memorable-password-generator-with-BIP39-passphrase">GitHub Repository</a> </p>
+    		<p>For more information, visit <a href="https://github.com/piztol/Memorable-password-generator-with-BIP39-passphrase">GitHub Repository</a> </p>
         </div>
 	</main>
 
@@ -2230,8 +2230,8 @@
             const specialChar = getRandomElement(specialChars);
 
             const password = generateLongPassword
-                ? `${word1}${word2}${word3}${digits}${specialChar}`
-                : `${word1}${word2}${digits}${specialChar}`;
+                ? `${word1}${word2}${word3}${specialChar}${digits}`
+                : `${word1}${word2}${specialChar}${digits}`;
 
             const display = document.getElementById('passwordDisplay');
             display.textContent = password;
