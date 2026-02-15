@@ -48,7 +48,7 @@
         }
 
         h1 {
-            margin: 1;
+            margin: 0 0 20px 0;
             font-size: clamp(1.6rem, 3vw, 2rem);
             letter-spacing: 0.02em;
         }
@@ -117,6 +117,43 @@
             opacity: 0.9;
         }
 
+        .tips-section {
+            margin-top: 36px;
+            padding-top: 24px;
+            border-top: 1px solid rgba(0, 255, 136, 0.2);
+            text-align: left;
+        }
+
+        .tips-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text-main);
+            margin: 0 0 16px 0;
+            text-align: center;
+        }
+
+        .tips-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .tips-list li {
+            margin: 10px 0;
+            padding: 1px 1px;
+            padding-left: 16px;
+            color: var(--text-subtle);
+            font-size: 0.9rem;
+            line-height: 1;
+        }
+
+        .tips-list li:before {
+            content: "▸ ";
+            color: var(--accent-start);
+            font-weight: bold;
+            margin-right: 6px;
+        }
+
         .checkbox-container {
             margin-top: 22px;
             display: flex;
@@ -136,12 +173,21 @@
             height: 18px;
             accent-color: #22c55e;
         }
+		a {
+    		color: var(--accent-start);
+    		text-decoration: underline;
+    		transition: opacity 0.2s ease;
+		}
+
+		a:hover {
+    		opacity: 0.8;
+		}
     </style>
 </head>
 <body>
     <main class="app">
-        <h1>Memorable Password Generator</h1>
-                <div class="password-display" id="passwordDisplay" onclick="selectPasswordText()"></div>
+        <h1>Passphrase Password Generator</h1>
+            <div class="password-display" id="passwordDisplay" onclick="selectPasswordText()"></div>
 
         <div class="button-row">
             <button onclick="generatePassword()" id="generateButton">New Password</button>
@@ -149,16 +195,20 @@
         </div>
         <div class="copy-status" id="copyStatus" aria-live="polite"></div>
 
-        <div class="checkbox-container">
-            <label>
-                <input type="checkbox" id="longPasswordCheckbox" onchange="togglePasswordLengthAndGenerate()"> Use longer password (3 words)
-            </label>
+        <div class="tips-section">
+            <h2 class="tips-title">💡 Tips for Account Password Security</h2>
+            <ul class="tips-list">
+                <li><b>Long:</b> 14+ characters.</li>
+                <li><b>Unique:</b> One password per account.</li>
+                <li><b>Managed:</b> Use a trusted password manager.</li>
+                <li><b>Verified:</b> Enable 2FA whenever possible.</li>
+            </ul>
         </div>
-        <div class="footer-note">
-            Word list source: Bitcoin BIP39 passphrase wordlist.
+	    <div class="footer-note">
     		<p>For more information, visit <a href="https://github.com/piztol/Memorable-password-generator-with-BIP39-passphrase">GitHub Repository</a> </p>
         </div>
-	</main>
+
+</main>
 
     <script>
         const words = [
@@ -2211,27 +2261,107 @@
 			"Zoo"
 		];
 
-        const specialChars = ['!', '@', '#', '$', '%', '?', '&'];
-        let generateLongPassword = false;
+        const specialChars = ['!', '@', '#', '$', '%', '?', '&', '*', '+', '-', '='];
+
+		// Password strength check, simplified version of zxcvbn, https://github.com/dropbox/zxcvbn
+        const zxcvbn = (function() {
+            // Common passwords
+            const commonPasswords = {
+                '123456': 1, 'password': 1, '123456789': 1, '12345678': 1,
+                'qwerty': 1, 'abc123': 1, 'monkey': 1, '1234567': 1,
+                'letmein': 1, 'trustno1': 1, 'dragon': 1, 'baseball': 1,
+                'iloveyou': 1, 'master': 1, 'sunshine': 1, 'ashley': 1
+            };
+
+            function estimateEntropy(password) {
+                const length = password.length;
+                let charsetSize = 0;
+                
+                if (/[a-z]/.test(password)) charsetSize += 26;
+                if (/[A-Z]/.test(password)) charsetSize += 26;
+                if (/[0-9]/.test(password)) charsetSize += 10;
+                if (/[^a-zA-Z0-9]/.test(password)) charsetSize += 32;
+                
+                if (charsetSize === 0) return 0;
+                
+                return Math.log2(Math.pow(charsetSize, length));
+            }
+
+            function scoreEntropy(entropy) {
+                if (entropy < 20) return 0;
+                if (entropy < 40) return 1;
+                if (entropy < 60) return 2;
+                if (entropy < 80) return 3;
+                return 4;
+            }
+
+            function checkCommon(password) {
+                const lower = password.toLowerCase();
+                if (commonPasswords[lower]) return true;
+                
+                // 123, abc etc..
+                if (/(.)\1{2,}/.test(password)) return true;
+                if (/(?:012|123|234|345|456|567|678|789|890|abc|bcd|cde)/.test(lower)) return true;
+                
+                return false;
+            }
+
+            return function(password) {
+                if (!password || password.length === 0) {
+                    return { score: 0, feedback: 'No password provided' };
+                }
+
+                if (checkCommon(password)) {
+                    return { score: 0, feedback: 'This password is too common' };
+                }
+
+                const entropy = estimateEntropy(password);
+                const score = scoreEntropy(entropy);
+
+                return {
+                    score: score,
+                    entropy: entropy,
+                    feedback: ['Very weak', 'Weak', 'Fair', 'Good', 'Very strong'][score]
+                };
+            };
+        })();
 
         function getRandomElement(array) {
             return array[Math.floor(Math.random() * array.length)];
         }
 
-        function generateThreeDigits() {
+        function generateDigits() {
             return Math.floor(Math.random() * 900 + 100).toString();
         }
 
         function generatePassword() {
-            const word1 = getRandomElement(words);
-            const word2 = getRandomElement(words);
-            const word3 = generateLongPassword ? getRandomElement(words) : "";
-            const digits = generateThreeDigits();
-            const specialChar = getRandomElement(specialChars);
+            let password = '';
+            let strength = 0;
+            let wordCount = 2;
 
-            const password = generateLongPassword
-                ? `${word1}${word2}${word3}${specialChar}${digits}`
-                : `${word1}${word2}${specialChar}${digits}`;
+            // Start from 2 words
+            while (wordCount <= 4) {
+                const words_selected = [];
+                for (let i = 0; i < wordCount; i++) {
+                    words_selected.push(getRandomElement(words));
+                }
+
+                const digits = generateDigits();
+                const specialChar = getRandomElement(specialChars);
+                const wordsToUse = words_selected.join('');
+
+                password = `${wordsToUse}${specialChar}${digits}${specialChar}`;
+
+                // Check password strength
+                const result = zxcvbn(password);
+                strength = result.score;
+
+                if (strength >= 4) {
+                    break;
+                }
+
+                wordCount++;
+            }
 
             const display = document.getElementById('passwordDisplay');
             display.textContent = password;
@@ -2267,12 +2397,6 @@
                 selectPasswordText();
                 setCopyStatus('Clipboard blocked. Password selected, press Ctrl+C / ⌘+C.');
             }
-        }
-
-        function togglePasswordLengthAndGenerate() {
-            const checkbox = document.getElementById('longPasswordCheckbox');
-            generateLongPassword = checkbox.checked;
-            generatePassword(); // Automatically generate a new password when toggled
         }
 
         // Generate initial password
